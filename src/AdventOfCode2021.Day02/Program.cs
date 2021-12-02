@@ -30,3 +30,20 @@ foreach (var instruction in instructions)
 var solution1 = position * depth;
 
 Console.WriteLine($"Day 2 - Puzzle 1: {solution1}");
+
+(position, depth) = (0, 0);
+
+var aim = 0;
+
+foreach (var instruction in instructions)
+{
+    position += instruction.position;
+
+    aim += instruction.depth;
+
+    depth += aim * instruction.position;
+}
+
+var solution2 = position * depth;
+
+Console.WriteLine($"Day 2 - Puzzle 2: {solution2}");
