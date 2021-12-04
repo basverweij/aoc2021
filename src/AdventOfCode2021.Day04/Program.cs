@@ -2,7 +2,7 @@
 
 var draws = lines[0].Split(',').Select(int.Parse).ToArray();
 
-var boards = lines.Skip(2).Chunk(6).Select(Board.Parse).ToArray();
+var boards = lines.Skip(2).Chunk(6).Select(Board.Parse).ToList();
 
 var (winner, draw) = Play(draws, boards);
 
@@ -10,9 +10,17 @@ var solution1 = winner.Numbers.Keys.Sum() * draw;
 
 Console.WriteLine($"Day 4 - Puzzle 1: {solution1}");
 
+boards.Remove(winner);
+
+var (last, finalDraw) = ContinueToLast(draws.SkipWhile(d => d != draw), boards);
+
+var solution2 = last.Numbers.Keys.Sum() * finalDraw;
+
+Console.WriteLine($"Day 4 - Puzzle 2: {solution2}");
+
 static (Board, int) Play(
-    int[] draws,
-    Board[] boards)
+    IEnumerable<int> draws,
+    IReadOnlyList<Board> boards)
 {
     foreach (var draw in draws)
     {
@@ -26,6 +34,29 @@ static (Board, int) Play(
     }
 
     throw new InvalidOperationException("no winner");
+}
+
+static (Board, int) ContinueToLast(
+    IEnumerable<int> draws,
+    IList<Board> boards)
+{
+    foreach (var draw in draws)
+    {
+        foreach (var board in boards.ToArray()) // copy to allow removing boards
+        {
+            if (board.Wins(draw))
+            {
+                boards.Remove(board);
+
+                if (!boards.Any())
+                {
+                    return (board, draw);
+                }
+            }
+        }
+    }
+
+    throw new InvalidOperationException("no loser");
 }
 
 record Board(
