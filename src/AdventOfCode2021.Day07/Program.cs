@@ -14,19 +14,7 @@ int GetMinFuel(
     int[] crabs,
     Func<int, int> cost)
 {
-    var max = crabs.Max();
-
-    var minFuel = int.MaxValue;
-
-    for (var i = 0; i < max; i++)
-    {
-        var fuel = crabs.Sum(c => cost(Math.Abs(c - i)));
-
-        if (fuel < minFuel)
-        {
-            minFuel = fuel;
-        }
-    }
-
-    return minFuel;
+    return Enumerable
+        .Range(0, crabs.Max())
+        .Min(i => crabs.Sum(c => cost(Math.Abs(c - i))));
 }
