@@ -1,26 +1,36 @@
 ﻿var input = await File.ReadAllTextAsync("input.txt");
 
-var fish = input.Split(',').Select(int.Parse).ToList();
+var counts = input.Split(',').Select(int.Parse).GroupBy(age => age).ToDictionary(g => g.Key, g => g.Count());
 
-for (var i = 0; i < 80; i++)
-{
-    var n = fish.Count;
+var fish = Enumerable.Range(0, 9).Select(i => counts.TryGetValue(i, out var count) ? (long)count : 0L).ToArray();
 
-    for (var j = 0; j < n; j++)
-    {
-        if (fish[j] == 0)
-        {
-            fish[j] = 6;
+Simulate(fish, 80);
 
-            fish.Add(8);
-        }
-        else
-        {
-            fish[j]--;
-        }
-    }
-}
-
-var solution1 = fish.Count;
+var solution1 = fish.Sum();
 
 Console.WriteLine($"Day 6 - Puzzle 1: {solution1}");
+
+Simulate(fish, 256 - 80);
+
+var solution2 = fish.Sum();
+
+Console.WriteLine($"Day 6 - Puzzle 2: {solution2}");
+
+static void Simulate(
+    long[] fish,
+    int days)
+{
+    for (var i = 0; i < days; i++)
+    {
+        var newCount = fish[0];
+
+        for (var j = 1; j < 9; j++)
+        {
+            fish[j - 1] = fish[j];
+        }
+
+        fish[6] += newCount;
+
+        fish[8] = newCount;
+    }
+}
