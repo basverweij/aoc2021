@@ -2,11 +2,11 @@
 
 var graph = BuildGraph(input);
 
-var solution1 = FindPaths(graph, new() { "start" });
+var solution1 = FindPaths(graph);
 
 Console.WriteLine($"Day 12 - Puzzle 1: {solution1}");
 
-var solution2 = FindPaths(graph, new() { "start" }, 1);
+var solution2 = FindPaths(graph, 1);
 
 Console.WriteLine($"Day 12 - Puzzle 2: {solution2}");
 
@@ -46,12 +46,24 @@ static void UpdateGraph(
 
 static int FindPaths(
     Dictionary<string, HashSet<string>> graph,
-    List<string> path,
+    int allowedDuplicateSmallCaves = 0)
+{
+    return InternalFindPaths(
+        graph,
+        (nodes: new(), duplicateSmallCaves: new()),
+        "start",
+        allowedDuplicateSmallCaves);
+}
+
+static int InternalFindPaths(
+    Dictionary<string, HashSet<string>> graph,
+    (HashSet<string> nodes, HashSet<string> duplicateSmallCaves) path,
+    string next,
     int allowedDuplicateSmallCaves = 0)
 {
     var count = 0;
 
-    foreach (var link in graph[path.Last()])
+    foreach (var link in graph[next])
     {
         if (link == "start")
         {
@@ -69,28 +81,36 @@ static int FindPaths(
             continue;
         }
 
-        if ((link.ToLowerInvariant() == link) &&
-            path.Contains(link) &&
-            DuplicateSmallCaves(path) >= allowedDuplicateSmallCaves)
+        if (char.IsLower(link[0]) &&
+            path.nodes.Contains(link))
         {
-            // small caves can only be visited once, and
-            // the path can contain up to allowedDuplicateSmallCaves
-            // duplicates
+            // small cave: check allowed duplicates
+
+            if (path.duplicateSmallCaves.Count >= allowedDuplicateSmallCaves ||
+                path.duplicateSmallCaves.Contains(link))
+            {
+                // small caves can only be visited once
+
+                continue;
+            }
+
+            // allowed duplicate small cave
+
+            count += InternalFindPaths(
+                graph,
+                (new(path.nodes) { next }, new(path.duplicateSmallCaves) { link }),
+                link,
+                allowedDuplicateSmallCaves);
 
             continue;
         }
 
-        count += FindPaths(graph, new(path) { link }, allowedDuplicateSmallCaves);
+        count += InternalFindPaths(
+            graph,
+            (new(path.nodes) { next }, new(path.duplicateSmallCaves)),
+            link,
+            allowedDuplicateSmallCaves);
     }
 
     return count;
-}
-
-static int DuplicateSmallCaves(
-    IEnumerable<string> path)
-{
-    return path
-        .Where(n => n.ToLowerInvariant() == n)
-        .GroupBy(n => n)
-        .Count(g => g.Count() > 1);
 }
