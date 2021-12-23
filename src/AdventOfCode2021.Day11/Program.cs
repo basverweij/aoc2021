@@ -2,9 +2,17 @@
 
 var octopuses = input.Select(row => row.Select(c => c - '0').ToArray()).ToArray();
 
-var solution1 = Enumerable.Range(0, 100).Sum(_ => Step(octopuses));
+var solution1 = Enumerable.Range(1, 100).Sum(_ => Step(octopuses));
 
 Console.WriteLine($"Day 11 - Puzzle 1: {solution1}");
+
+octopuses = input.Select(row => row.Select(c => c - '0').ToArray()).ToArray();
+
+var count = octopuses.Length * octopuses[0].Length;
+
+var solution2 = Enumerable.Range(1, int.MaxValue).First(_ => Step(octopuses) == count);
+
+Console.WriteLine($"Day 11 - Puzzle 2: {solution2}");
 
 static int Step(
     int[][] octopuses)
