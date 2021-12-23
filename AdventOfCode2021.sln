@@ -11,13 +11,15 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdventOfCode2021.Day03", "s
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdventOfCode2021.Day04", "src\AdventOfCode2021.Day04\AdventOfCode2021.Day04.csproj", "{CF235B57-1AC5-4B78-94B8-2F1E482EA3CA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdventOfCode2021.Day05", "src\AdventOfCode2021.Day05\AdventOfCode2021.Day05.csproj", "{445D9EA1-5914-4843-8F2F-DB84B8FBE740}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdventOfCode2021.Day05", "src\AdventOfCode2021.Day05\AdventOfCode2021.Day05.csproj", "{445D9EA1-5914-4843-8F2F-DB84B8FBE740}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdventOfCode2021.Day06", "src\AdventOfCode2021.Day06\AdventOfCode2021.Day06.csproj", "{A1FC6D80-7F17-4405-960E-74D83DFDB6A7}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdventOfCode2021.Day06", "src\AdventOfCode2021.Day06\AdventOfCode2021.Day06.csproj", "{A1FC6D80-7F17-4405-960E-74D83DFDB6A7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdventOfCode2021.Day07", "src\AdventOfCode2021.Day07\AdventOfCode2021.Day07.csproj", "{525283A5-3938-4EAB-9F56-8A86CB5BC53D}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdventOfCode2021.Day07", "src\AdventOfCode2021.Day07\AdventOfCode2021.Day07.csproj", "{525283A5-3938-4EAB-9F56-8A86CB5BC53D}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdventOfCode2021.Day08", "src\AdventOfCode2021.Day08\AdventOfCode2021.Day08.csproj", "{A141BACA-78F8-4C6C-9344-6873DAB65E85}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "AdventOfCode2021.Day08", "src\AdventOfCode2021.Day08\AdventOfCode2021.Day08.csproj", "{A141BACA-78F8-4C6C-9344-6873DAB65E85}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AdventOfCode2021.Day09", "src\AdventOfCode2021.Day09\AdventOfCode2021.Day09.csproj", "{4B5E27F3-6EAA-4709-8A1B-716217268503}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -57,6 +59,10 @@ Global
 		{A141BACA-78F8-4C6C-9344-6873DAB65E85}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A141BACA-78F8-4C6C-9344-6873DAB65E85}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A141BACA-78F8-4C6C-9344-6873DAB65E85}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4B5E27F3-6EAA-4709-8A1B-716217268503}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4B5E27F3-6EAA-4709-8A1B-716217268503}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4B5E27F3-6EAA-4709-8A1B-716217268503}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4B5E27F3-6EAA-4709-8A1B-716217268503}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
