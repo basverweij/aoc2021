@@ -8,6 +8,15 @@ var solution1 = dots.Count;
 
 Console.WriteLine($"Day 13 - Puzzle 1: {solution1}");
 
+foreach (var fold in folds.Skip(1))
+{
+    Fold(dots, fold);
+}
+
+Console.WriteLine($"Day 13 - Puzzle 2:");
+
+PrintDots(dots);
+
 static (HashSet<(int x, int y)> dots, (int x, int y)[] folds) ParseInput(
     string[] input)
 {
@@ -86,4 +95,24 @@ static void Fold(
 
         dots.Remove((x, y));
     }
+}
+
+static void PrintDots(
+    HashSet<(int x, int y)> dots)
+{
+    var min = (x: dots.Min(d => d.x), y: dots.Min(d => d.y));
+
+    var max = (x: dots.Max(d => d.x), y: dots.Max(d => d.y));
+
+    var lines = Enumerable
+        .Range(0, max.y - min.y + 1)
+        .Select(_ => new string('.', max.x - min.x + 1).ToCharArray())
+        .ToArray();
+
+    foreach (var (x, y) in dots)
+    {
+        lines[y - min.y][x - min.x] = '#';
+    }
+
+    Console.WriteLine(string.Join(Environment.NewLine, lines.Select(line => new string(line))));
 }
