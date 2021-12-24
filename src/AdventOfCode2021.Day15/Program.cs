@@ -1,14 +1,58 @@
 ﻿var input = await File.ReadAllLinesAsync("input.txt");
 
+//var input = new string[]
+//{
+//    "1163751742",
+//    "1381373672",
+//    "2136511328",
+//    "3694931569",
+//    "7463417111",
+//    "1319128137",
+//    "1359912421",
+//    "3125421639",
+//    "1293138521",
+//    "2311944581",
+//};
+
 var levels = input.Select(line => line.Select(c => c - '0').ToArray()).ToArray();
 
-var path = FindLowestTotalRiskPath(levels);
-
-var solution1 = TotalRisk(levels, path);
+var solution1 = FindLowestTotalRiskPath(levels).TotalRisk;
 
 Console.WriteLine($"Day 15 - Puzzle 1: {solution1}");
 
-static (int x, int y)[] FindLowestTotalRiskPath(
+var expandedLevels = ExpandLevels(levels, 5, 5);
+
+var solution2 = FindLowestTotalRiskPath(expandedLevels).TotalRisk;
+
+Console.WriteLine($"Day 15 - Puzzle 2: {solution2}");
+
+static int[][] ExpandLevels(
+    int[][] levels,
+    int expandX,
+    int expandY)
+{
+    var expandedLevels = new int[levels.Length * expandY][];
+
+    for (var y = 0; y < levels.Length; y++)
+    {
+        for (var yy = 0; yy < expandY; yy++)
+        {
+            expandedLevels[yy * levels.Length + y] = new int[levels[y].Length * expandX];
+
+            for (var x = 0; x < levels[y].Length; x++)
+            {
+                for (var xx = 0; xx < expandX; xx++)
+                {
+                    expandedLevels[yy * levels.Length + y][xx * levels[y].Length + x] = (levels[y][x] - 1 + yy + xx) % 9 + 1;
+                }
+            }
+        }
+    }
+
+    return expandedLevels;
+}
+
+static Path FindLowestTotalRiskPath(
     int[][] levels)
 {
     var totalRisks = Enumerable
@@ -20,45 +64,45 @@ static (int x, int y)[] FindLowestTotalRiskPath(
 
     totalRisks[0][0] = 0;
 
+    var queue = new Queue<Path>();
+
+    queue.Enqueue(new Path((0, 0), 0));
+
     return InternalFindLowestTotalRiskPath(
         levels,
         totalRisks,
-        new Queue<(int x, int y)[]>(new[] { new[] { (0, 0) } }));
+        queue);
 }
 
-static (int x, int y)[] InternalFindLowestTotalRiskPath(
+static Path InternalFindLowestTotalRiskPath(
     int[][] levels,
     int[][] totalRisks,
-    Queue<(int x, int y)[]> partialPaths)
+    Queue<Path> partialPaths)
 {
-    var lowestTotalRisk = int.MaxValue;
-
-    var path = Array.Empty<(int x, int y)>();
+    var path = new Path((0, 0), int.MaxValue);
 
     while (partialPaths.TryDequeue(out var partialPath))
     {
-        var totalRisk = TotalRisk(levels, partialPath);
-
-        if (totalRisk < lowestTotalRisk &&
-            partialPath[^1].y == levels.Length - 1 &&
-            partialPath[^1].x == levels[partialPath[^1].y].Length - 1)
+        if (partialPath.Last.y == levels.Length - 1 &&
+            partialPath.Last.x == levels[partialPath.Last.y].Length - 1 &&
+            partialPath.TotalRisk < path.TotalRisk)
         {
-            // reached the end, check if path has lower cost
-
-            lowestTotalRisk = totalRisk;
+            // reached the end w/ a lower total risk path
 
             path = partialPath;
 
             continue;
         }
 
-        var candidates = GetCandidates(levels, partialPath[^1]);
+        var candidates = GetCandidates(levels, partialPath.Last);
 
-        var nexts = candidates.Where(c => IsLowerTotalRiskCandidate(levels, totalRisks, totalRisk, c));
+        var nexts = GetLowerTotalRiskCandidates(levels, totalRisks, partialPath.TotalRisk, candidates);
 
-        foreach (var next in nexts)
+        foreach (var (x, y, totalRisk) in nexts)
         {
-            var nextPath = partialPath.Concat(new[] { next }).ToArray();
+            var nextPath = new Path(
+                (x, y),
+                totalRisk);
 
             partialPaths.Enqueue(nextPath);
         }
@@ -92,27 +136,27 @@ static IEnumerable<(int x, int y)> GetCandidates(
     }
 }
 
-static bool IsLowerTotalRiskCandidate(
+static IEnumerable<(int x, int y, int totalRisk)> GetLowerTotalRiskCandidates(
     int[][] levels,
     int[][] totalRisks,
     int totalRisk,
-    (int x, int y) candidate)
+    IEnumerable<(int x, int y)> candidates)
 {
-    var candidateTotalRisk = totalRisk + levels[candidate.y][candidate.x];
-
-    if (totalRisks[candidate.y][candidate.x] <= candidateTotalRisk)
+    foreach (var (x, y) in candidates)
     {
-        return false;
+        var candidateTotalRisk = totalRisk + levels[y][x];
+
+        if (totalRisks[y][x] <= candidateTotalRisk)
+        {
+            continue;
+        }
+
+        totalRisks[y][x] = candidateTotalRisk;
+
+        yield return (x, y, candidateTotalRisk);
     }
-
-    totalRisks[candidate.y][candidate.x] = candidateTotalRisk;
-
-    return true;
 }
 
-static int TotalRisk(
-    int[][] levels,
-    IEnumerable<(int x, int y)> path)
-{
-    return path.Skip(1).Sum(p => levels[p.y][p.x]);
-}
+sealed record Path(
+    (int x, int y) Last,
+    int TotalRisk);
