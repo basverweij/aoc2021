@@ -2,7 +2,7 @@
 
 var input = await File.ReadAllLinesAsync("input.txt");
 
-var template = input[0];
+var template = ParseTemplate(input[0]);
 
 var rules = ParseRules(input.Skip(2));
 
@@ -11,11 +11,28 @@ for (var i = 0; i < 10; i++)
     template = InsertPairs(template, rules);
 }
 
-var counts = template.GroupBy(c => c);
-
-var solution1 = counts.Max(c => c.Count()) - counts.Min(c => c.Count());
+var solution1 = GetSolution(template, input[0][^1]);
 
 Console.WriteLine($"Day 14 - Puzzle 1: {solution1}");
+
+for (var i = 0; i < 30; i++)
+{
+    template = InsertPairs(template, rules);
+}
+
+var solution2 = GetSolution(template, input[0][^1]);
+
+Console.WriteLine($"Day 14 - Puzzle 2: {solution2}");
+
+static IReadOnlyDictionary<(char left, char right), long> ParseTemplate(
+    string template)
+{
+    return Enumerable
+        .Range(0, template.Length - 1)
+        .Select(i => (template[i], template[i + 1]))
+        .GroupBy(p => p)
+        .ToDictionary(p => p.Key, p => p.LongCount());
+}
 
 static Rules ParseRules(
     IEnumerable<string> lines)
@@ -27,22 +44,47 @@ static Rules ParseRules(
             parts => parts[1][0]);
 }
 
-static string InsertPairs(
-    string template,
+static IReadOnlyDictionary<(char left, char right), long> InsertPairs(
+    IReadOnlyDictionary<(char left, char right), long> template,
     Rules rules)
 {
-    var elements = new List<char>();
+    return template
+        .SelectMany(kvp => InsertPair(kvp, rules))
+        .GroupBy(kvp => kvp.Key)
+        .ToDictionary(kvp => kvp.Key, kvp => kvp.Sum(p => p.Value));
+}
 
-    for (var i = 0; i < template.Length - 1; i++)
+static IEnumerable<KeyValuePair<(char left, char right), long>> InsertPair(
+    KeyValuePair<(char left, char right), long> pair,
+    Rules rules)
+{
+    var insert = rules[pair.Key];
+
+    yield return new((pair.Key.left, insert), pair.Value);
+
+    yield return new((insert, pair.Key.right), pair.Value);
+}
+
+static long GetSolution(
+    IReadOnlyDictionary<(char left, char right), long> template,
+    char last)
+{
+    // only count 'lefts' as the 'rights' will be the same, except for the last element
+
+    var counts = template
+        .GroupBy(kvp => kvp.Key.left)
+        .ToDictionary(g => g.Key, g => g.Sum(kvp => kvp.Value));
+
+    // add 1 additional count for the right-most element as this is not included in the left counts
+
+    if (!counts.TryGetValue(
+        last,
+        out var count))
     {
-        var (left, right) = (template[i], template[i + 1]);
-
-        elements.Add(left);
-
-        elements.Add(rules[(left, right)]);
+        count = 0;
     }
 
-    elements.Add(template[^1]);
+    counts[last] = count + 1;
 
-    return new string(elements.ToArray());
+    return counts.Values.Max() - counts.Values.Min();
 }
