@@ -51,7 +51,7 @@ static IReadOnlyDictionary<(char left, char right), long> InsertPairs(
     return template
         .SelectMany(kvp => InsertPair(kvp, rules))
         .GroupBy(kvp => kvp.Key)
-        .ToDictionary(kvp => kvp.Key, kvp => kvp.Sum(p => p.Value));
+        .ToDictionary(g => g.Key, g => g.Sum(kvp => kvp.Value));
 }
 
 static IEnumerable<KeyValuePair<(char left, char right), long>> InsertPair(
