@@ -1,28 +1,28 @@
-﻿var input = await File.ReadAllLinesAsync("input.txt");
+﻿//var input = await File.ReadAllLinesAsync("input.txt");
 
-//var input = new string[]
-//{
-//    "1163751742",
-//    "1381373672",
-//    "2136511328",
-//    "3694931569",
-//    "7463417111",
-//    "1319128137",
-//    "1359912421",
-//    "3125421639",
-//    "1293138521",
-//    "2311944581",
-//};
+var input = new string[]
+{
+    "1163751742",
+    "1381373672",
+    "2136511328",
+    "3694931569",
+    "7463417111",
+    "1319128137",
+    "1359912421",
+    "3125421639",
+    "1293138521",
+    "2311944581",
+};
 
 var levels = input.Select(line => line.Select(c => c - '0').ToArray()).ToArray();
 
-var solution1 = FindLowestTotalRiskPath(levels).TotalRisk;
+var solution1 = FindLowestTotalRiskToEnd(levels);
 
 Console.WriteLine($"Day 15 - Puzzle 1: {solution1}");
 
 var expandedLevels = ExpandLevels(levels, 5, 5);
 
-var solution2 = FindLowestTotalRiskPath(expandedLevels).TotalRisk;
+var solution2 = FindLowestTotalRiskToEnd(expandedLevels);
 
 Console.WriteLine($"Day 15 - Puzzle 2: {solution2}");
 
@@ -50,6 +50,48 @@ static int[][] ExpandLevels(
     }
 
     return expandedLevels;
+}
+
+static int FindLowestTotalRiskToEnd(
+    int[][] levels)
+{
+    var totalRisks = Enumerable
+        .Range(0, levels.Length)
+        .Select(y => Enumerable.Range(0, levels[y].Length).Select(_ => 0).ToArray())
+        .ToArray();
+
+    // starting position has zero total risk
+
+    totalRisks[0][0] = 0;
+
+    for (var i = 1; i < levels.Length * 2; i++)
+    {
+        var y = Min(i, levels.Length - 1);
+
+        var x = Max(i - levels.Length + 1, 0);
+
+        for (; y >= 0 && x < levels.Length; y--, x++)
+        {
+            totalRisks[y][x] = (y, x) switch
+            {
+                (_, 0) => totalRisks[y - 1][0], // only consider top
+                (0, _) => totalRisks[0][x - 1], // only consider left
+                _ => Min(totalRisks[y - 1][x], totalRisks[y][x - 1]),
+            } + levels[y][x];
+        }
+    }
+
+    return totalRisks[^1][^1];
+}
+
+static int Max(int a, int b)
+{
+    return a > b ? a : b;
+}
+
+static int Min(int a, int b)
+{
+    return a < b ? a : b;
 }
 
 static Path FindLowestTotalRiskPath(
