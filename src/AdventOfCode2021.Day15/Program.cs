@@ -1,28 +1,14 @@
-﻿//var input = await File.ReadAllLinesAsync("input.txt");
-
-var input = new string[]
-{
-    "1163751742",
-    "1381373672",
-    "2136511328",
-    "3694931569",
-    "7463417111",
-    "1319128137",
-    "1359912421",
-    "3125421639",
-    "1293138521",
-    "2311944581",
-};
+﻿var input = await File.ReadAllLinesAsync("input.txt");
 
 var levels = input.Select(line => line.Select(c => c - '0').ToArray()).ToArray();
 
-var solution1 = FindLowestTotalRiskToEnd(levels);
+var solution1 = FindShortestPath(levels);
 
 Console.WriteLine($"Day 15 - Puzzle 1: {solution1}");
 
 var expandedLevels = ExpandLevels(levels, 5, 5);
 
-var solution2 = FindLowestTotalRiskToEnd(expandedLevels);
+var solution2 = FindShortestPath(expandedLevels);
 
 Console.WriteLine($"Day 15 - Puzzle 2: {solution2}");
 
@@ -52,153 +38,116 @@ static int[][] ExpandLevels(
     return expandedLevels;
 }
 
-static int FindLowestTotalRiskToEnd(
+static int FindShortestPath(
     int[][] levels)
 {
-    var totalRisks = Enumerable
+    var nodes = Enumerable
         .Range(0, levels.Length)
-        .Select(y => Enumerable.Range(0, levels[y].Length).Select(_ => 0).ToArray())
+        .Select(y => Enumerable.Range(0, levels[y].Length).Select(x => new Node(x, y)).ToArray())
         .ToArray();
 
-    // starting position has zero total risk
+    var visited = Enumerable
+        .Range(0, levels.Length)
+        .Select(y => Enumerable.Range(0, levels[y].Length).Select(_ => false).ToArray())
+        .ToArray();
 
-    totalRisks[0][0] = 0;
+    // starting position has zero distance
 
-    for (var i = 1; i < levels.Length * 2; i++)
+    nodes[0][0].Distance = 0;
+
+    var sortedNodes = new SortedSet<Node>(
+        nodes.SelectMany(n => n),
+        new ByDistance());
+
+    // run Dijkstra's shortest path algorithm
+
+    while (true)
     {
-        var y = Min(i, levels.Length - 1);
+        var current = sortedNodes.First();
 
-        var x = Max(i - levels.Length + 1, 0);
-
-        for (; y >= 0 && x < levels.Length; y--, x++)
+        if (current.Y == levels.Length - 1 &&
+            current.X == levels[current.Y].Length - 1)
         {
-            totalRisks[y][x] = (y, x) switch
+            // reached the end
+
+            return current.Distance;
+        }
+
+        var unvisitedNeighbours = GetNeighbours(levels, current).Where(nb => !visited[nb.y][nb.x]);
+
+        foreach (var (x, y) in unvisitedNeighbours)
+        {
+            var node = nodes[y][x];
+
+            var distance = current.Distance + levels[y][x];
+
+            if (distance < node.Distance)
             {
-                (_, 0) => totalRisks[y - 1][0], // only consider top
-                (0, _) => totalRisks[0][x - 1], // only consider left
-                _ => Min(totalRisks[y - 1][x], totalRisks[y][x - 1]),
-            } + levels[y][x];
+                sortedNodes.Remove(node);
+
+                node.Distance = distance;
+
+                sortedNodes.Add(node);
+            }
         }
+
+        // remove current node and mark as visited
+
+        sortedNodes.Remove(current);
+
+        visited[current.Y][current.X] = true;
     }
-
-    return totalRisks[^1][^1];
 }
 
-static int Max(int a, int b)
-{
-    return a > b ? a : b;
-}
-
-static int Min(int a, int b)
-{
-    return a < b ? a : b;
-}
-
-static Path FindLowestTotalRiskPath(
-    int[][] levels)
-{
-    var totalRisks = Enumerable
-        .Range(0, levels.Length)
-        .Select(y => Enumerable.Range(0, levels[y].Length).Select(_ => int.MaxValue).ToArray())
-        .ToArray();
-
-    // starting position has zero total risk
-
-    totalRisks[0][0] = 0;
-
-    var queue = new Queue<Path>();
-
-    queue.Enqueue(new Path((0, 0), 0));
-
-    return InternalFindLowestTotalRiskPath(
-        levels,
-        totalRisks,
-        queue);
-}
-
-static Path InternalFindLowestTotalRiskPath(
+static IEnumerable<(int x, int y)> GetNeighbours(
     int[][] levels,
-    int[][] totalRisks,
-    Queue<Path> partialPaths)
+    Node current)
 {
-    var path = new Path((0, 0), int.MaxValue);
-
-    while (partialPaths.TryDequeue(out var partialPath))
+    if (current.Y > 0)
     {
-        if (partialPath.Last.y == levels.Length - 1 &&
-            partialPath.Last.x == levels[partialPath.Last.y].Length - 1 &&
-            partialPath.TotalRisk < path.TotalRisk)
-        {
-            // reached the end w/ a lower total risk path
-
-            path = partialPath;
-
-            continue;
-        }
-
-        var candidates = GetCandidates(levels, partialPath.Last);
-
-        var nexts = GetLowerTotalRiskCandidates(levels, totalRisks, partialPath.TotalRisk, candidates);
-
-        foreach (var (x, y, totalRisk) in nexts)
-        {
-            var nextPath = new Path(
-                (x, y),
-                totalRisk);
-
-            partialPaths.Enqueue(nextPath);
-        }
+        yield return (current.X, current.Y - 1); // top
     }
 
-    return path;
-}
-
-static IEnumerable<(int x, int y)> GetCandidates(
-    int[][] levels,
-    (int x, int y) last)
-{
-    if (last.y > 0)
+    if (current.Y < levels.Length - 1)
     {
-        yield return (last.x, last.y - 1); // top
+        yield return (current.X, current.Y + 1); // bottom
     }
 
-    if (last.y < levels.Length - 1)
+    if (current.X > 0)
     {
-        yield return (last.x, last.y + 1); // bottom
+        yield return (current.X - 1, current.Y); // left
     }
 
-    if (last.x > 0)
+    if (current.X < levels[current.Y].Length - 1)
     {
-        yield return (last.x - 1, last.y); // left
-    }
-
-    if (last.x < levels[last.y].Length - 1)
-    {
-        yield return (last.x + 1, last.y); // right
+        yield return (current.X + 1, current.Y); // right
     }
 }
 
-static IEnumerable<(int x, int y, int totalRisk)> GetLowerTotalRiskCandidates(
-    int[][] levels,
-    int[][] totalRisks,
-    int totalRisk,
-    IEnumerable<(int x, int y)> candidates)
+sealed record Node(
+    int X,
+    int Y)
 {
-    foreach (var (x, y) in candidates)
-    {
-        var candidateTotalRisk = totalRisk + levels[y][x];
-
-        if (totalRisks[y][x] <= candidateTotalRisk)
-        {
-            continue;
-        }
-
-        totalRisks[y][x] = candidateTotalRisk;
-
-        yield return (x, y, candidateTotalRisk);
-    }
+    public int Distance { get; set; } = int.MaxValue;
 }
 
-sealed record Path(
-    (int x, int y) Last,
-    int TotalRisk);
+sealed class ByDistance :
+    IComparer<Node>
+{
+    public int Compare(
+        Node? x,
+        Node? y)
+    {
+        if (x!.Distance != y!.Distance)
+        {
+            return x!.Distance - y!.Distance;
+        }
+
+        if (x.X != y.X)
+        {
+            return x.X - y.X;
+        }
+
+        return x.Y - y.Y;
+    }
+}
