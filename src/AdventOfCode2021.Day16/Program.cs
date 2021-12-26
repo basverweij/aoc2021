@@ -8,6 +8,10 @@ var solution1 = packet.GetVersionSum();
 
 Console.WriteLine($"Day 16 - Puzzle 1: {solution1}");
 
+var solution2 = packet.GetValue();
+
+Console.WriteLine($"Day 16 - Puzzle 2: {solution2}");
+
 static IEnumerable<byte> ParseHexDigits(
     char digit)
 {
@@ -144,4 +148,21 @@ sealed record Packet(
     public List<Packet> SubPackets { get; init; } = new();
 
     public int GetVersionSum() => Version + SubPackets.Sum(p => p.GetVersionSum());
+
+    public long GetValue()
+    {
+#pragma warning disable CS8509
+        return TypeId switch
+#pragma warning restore CS8509
+        {
+            0 => SubPackets.Sum(p => p.GetValue()),
+            1 => SubPackets.Aggregate(1L, (a, b) => a * b.GetValue()),
+            2 => SubPackets.Min(p => p.GetValue()),
+            3 => SubPackets.Max(p => p.GetValue()),
+            4 => LiteralValue,
+            5 => SubPackets[0].GetValue() > SubPackets[1].GetValue() ? 1 : 0,
+            6 => SubPackets[0].GetValue() < SubPackets[1].GetValue() ? 1 : 0,
+            7 => SubPackets[0].GetValue() == SubPackets[1].GetValue() ? 1 : 0,
+        };
+    }
 }
