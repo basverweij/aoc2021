@@ -8,6 +8,12 @@ var solution1 = sum.Magnitude;
 
 Console.WriteLine($"Day 18 - Puzzle 1: {solution1}");
 
+var sums = numbers.SelectMany((a, i) => numbers.Where((_, j) => j != i).Select(b => Number.Add(a, b))).ToArray();
+
+var solution2 = sums.Max(n => n.Magnitude);
+
+Console.WriteLine($"Day 18 - Puzzle 2: {solution2}");
+
 sealed class Number
 {
     internal static Number Parse(
@@ -50,7 +56,7 @@ sealed class Number
         Number a,
         Number b)
     {
-        var sum = new Number(a, b);
+        var sum = new Number(new(a), new(b));
 
         sum.Reduce();
 
@@ -82,6 +88,22 @@ sealed class Number
         IsPair = false;
 
         Value = value;
+    }
+
+    private Number(Number number)
+    {
+        IsPair = number.IsPair;
+
+        if (IsPair)
+        {
+            Left = new(number.Left!);
+
+            Right = new(number.Right!);
+        }
+        else
+        {
+            Value = number.Value;
+        }
     }
 
     public override string ToString() => IsPair ? $"[{Left},{Right}]" : Value.ToString();
