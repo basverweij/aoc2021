@@ -1,24 +1,8 @@
-﻿//var input = await File.ReadAllLinesAsync("input.txt");
-
-var input = new[]
-{
-    "[[[0,[5,8]],[[1,7],[9,6]]],[[4,[1,2]],[[1,4],2]]]",
-    "[[[5,[2,8]],4],[5,[[9,9],0]]]",
-    "[6,[[[6,2],[5,6]],[[7,6],[4,7]]]]",
-    "[[[6,[0,7]],[0,9]],[4,[9,[9,0]]]]",
-    "[[[7,[6,4]],[3,[1,3]]],[[[5,5],1],9]]",
-    "[[6,[[7,3],[3,2]]],[[[3,8],[5,7]],4]]",
-    "[[[[5,4],[7,7]],8],[[8,3],8]]",
-    "[[9,3],[[9,9],[6,[4,9]]]]",
-    "[[2,[[7,7],7]],[[5,8],[[9,3],[0,2]]]]",
-    "[[[[5,2],5],[8,[3,7]]],[[5,[7,5]],[4,4]]]",
-};
+﻿var input = await File.ReadAllLinesAsync("input.txt");
 
 var numbers = input.Select(Number.Parse).ToArray();
 
 var sum = numbers.Skip(1).Aggregate(numbers[0], (a, b) => Number.Add(a, b));
-
-Console.WriteLine(sum);
 
 var solution1 = sum.Magnitude;
 
@@ -73,13 +57,13 @@ sealed class Number
         return sum;
     }
 
-    public bool IsPair { get; set; }
+    public bool IsPair { get; private set; }
 
-    public int Value { get; set; }
+    public int Value { get; private set; }
 
-    public Number? Left { get; set; }
+    public Number? Left { get; private set; }
 
-    public Number? Right { get; set; }
+    public Number? Right { get; private set; }
 
     public Number(
         Number left,
@@ -100,96 +84,105 @@ sealed class Number
         Value = value;
     }
 
-    public override string ToString() => IsPair ? Value.ToString() : $"[{Left},{Right}]";
+    public override string ToString() => IsPair ? $"[{Left},{Right}]" : Value.ToString();
 
-    public int Magnitude => IsPair ? Value : 3 * Left!.Magnitude + 2 * Right!.Magnitude;
+    public int Magnitude => IsPair ? 3 * Left!.Magnitude + 2 * Right!.Magnitude : Value;
 
-    private bool Visit(
-        INumberVisitor visitor)
+    private IEnumerable<(Number number, int level)> All()
     {
-        var path = new Stack<Number>();
+        var path = new Stack<(Number number, int level)>();
 
-        path.Push(this);
+        path.Push((this, 0));
 
-        while (path.Any())
+        while (path.TryPop(out var p))
         {
-            var number = path.Pop();
+            yield return (p.number, p.level);
 
-            if (visitor.Visit(path, number))
+            if (p.number.IsPair)
             {
-                // stop if visitor returns true
+                path.Push((p.number.Right!, p.level + 1));
+
+                path.Push((p.number.Left!, p.level + 1));
+            }
+        }
+    }
+
+    private void Reduce()
+    {
+        while (true)
+        {
+            var all = All().ToArray();
+
+            if (!Explode(all) && !Split(all))
+            {
+                return;
+            }
+        }
+    }
+
+    private static bool Explode(
+        (Number number, int level)[] all)
+    {
+        for (var i = 0; i < all.Length; i++)
+        {
+            if (all[i].level == 4 &&
+                all[i].number.IsPair)
+            {
+                for (var j = i - 1; j >= 0; j--)
+                {
+                    if (!all[j].number.IsPair)
+                    {
+                        all[j].number.Value += all[i].number.Left!.Value;
+
+                        break;
+                    }
+                }
+
+                for (var j = i + 3; j < all.Length; j++)
+                {
+                    if (!all[j].number.IsPair)
+                    {
+                        all[j].number.Value += all[i].number.Right!.Value;
+
+                        break;
+                    }
+                }
+
+                all[i].number.Value = 0;
+
+                all[i].number.IsPair = false;
+
+                all[i].number.Left = null;
+
+                all[i].number.Right = null;
 
                 return true;
-            }
-
-            if (number.IsPair)
-            {
-                path.Push(number.Left!);
-
-                path.Push(number.Right!);
             }
         }
 
         return false;
     }
 
-    private void Reduce()
+    private static bool Split(
+        (Number number, int level)[] all)
     {
-        while (Visit(new ExplodeVisitor()) || Visit(new SplitVisitor()))
+        for (var i = 0; i < all.Length; i++)
         {
-            // keep reducing
-        }
-    }
-}
+            if (!all[i].number.IsPair &&
+                all[i].number.Value > 9)
+            {
+                all[i].number.Left = new(all[i].number.Value / 2);
 
-interface INumberVisitor
-{
-    bool Visit(
-        Stack<Number> path,
-        Number number);
-}
+                all[i].number.Right = new((all[i].number.Value + 1) / 2);
 
-sealed class ExplodeVisitor :
-    INumberVisitor
-{
-    public bool Visit(
-        Stack<Number> path,
-        Number number)
-    {
-        if (path.Count < 4 || !number.IsPair)
-        {
-            return false;
+                all[i].number.IsPair = true;
+
+                all[i].number.Value = 0;
+
+                return true;
+            }
         }
 
-
-
-        return true;
-    }
-}
-
-sealed class SplitVisitor :
-    INumberVisitor
-{
-    public bool Visit(
-        Stack<Number> path,
-        Number number)
-    {
-        if (number.IsPair ||
-            number.Value < 10)
-        {
-            return false;
-        }
-
-        // split number
-
-        number.Left = new(number.Value / 2);
-
-        number.Right = new((number.Value + 1) / 2);
-
-        number.Value = 0;
-
-        number.IsPair = true;
-
-        return true;
+        return false;
     }
 }
